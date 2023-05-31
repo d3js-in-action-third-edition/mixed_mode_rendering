@@ -55,7 +55,6 @@
   let canvasElement;
   let hiddenCanvasElement;
   const handleSimulationEnd = () => {
-    console.log("sim end");
     // Draw the paintings circles on the visible canvas
     const context = canvasElement.getContext("2d");
     nodes.forEach((node) => {
@@ -160,7 +159,6 @@
   };
 
   $: {
-    console.log("new sim");
     simulation.restart(); // Necessary to ensure that end event is triggered again
     simulation
       .force(
@@ -169,7 +167,6 @@
           const translation = yearsTranslations.find(
             (y) => y.year === d.year
           ).translationX;
-          console.log("calc x");
           return d.month !== ""
             ? translation + radius * Math.sin(monthScale(d.month))
             : translation;

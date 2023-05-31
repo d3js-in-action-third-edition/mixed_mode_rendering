@@ -179,22 +179,7 @@
     />
   {/if}
   {#if isTooltipVisible}
-    <Tooltip
-      x={tooltipMeta.x}
-      y={tooltipMeta.y}
-      screenY={tooltipMeta.screenY}
-      url={tooltipMeta.url}
-      title={tooltipMeta.title}
-      createdIn={tooltipMeta.createdIn}
-      date={tooltipMeta.date}
-      medium={tooltipMeta.medium}
-      currentLocation={tooltipMeta.currentLocation}
-      width={tooltipMeta.width}
-      height={tooltipMeta.height}
-      subject={tooltipMeta.subject}
-      {svgWidth}
-      {windowHeight}
-    />
+    <Tooltip {...tooltipMeta} {svgWidth} {windowHeight} />
   {/if}
 </div>
 
