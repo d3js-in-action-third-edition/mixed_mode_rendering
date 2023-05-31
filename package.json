@@ -2,7 +2,7 @@
   "name": "van_gogh_work",
   "private": true,
   "version": "0.0.0",
-  "homepage": "d3js-in-action-third-edition.github.io/van_gogh_work/",
+  "homepage": "d3js-in-action-third-edition.github.io/mixed_mode_rendering/",
   "type": "module",
   "scripts": {
     "dev": "vite",
