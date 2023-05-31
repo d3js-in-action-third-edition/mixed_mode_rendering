@@ -2,11 +2,9 @@
   import { forceSimulation, forceX, forceY, forceCollide } from "d3-force";
   import { scaleOrdinal } from "d3-scale";
   import { subjects } from "../utils/subjects";
-  import { onMount } from "svelte";
 
   export let paintingAreaScale;
   export let paintingDefaultRadius;
-  // export let paintings;
   export let monthScale;
   export let radius;
   export let isTooltipVisible = false;
@@ -58,8 +56,6 @@
   let hiddenCanvasElement;
   const handleSimulationEnd = () => {
     console.log("sim end");
-    console.log("nodes", nodes);
-
     // Draw the paintings circles on the visible canvas
     const context = canvasElement.getContext("2d");
     nodes.forEach((node) => {
@@ -138,7 +134,6 @@
         );
         if (hoveredNode) {
           const nodeInfo = hoveredNode.node;
-          console.log(nodeInfo);
           isTooltipVisible = true;
           tooltipMeta = {
             x: mouseX,
@@ -165,6 +160,8 @@
   };
 
   $: {
+    console.log("new sim");
+    simulation.restart(); // Necessary to ensure that end event is triggered again
     simulation
       .force(
         "x",
@@ -172,6 +169,7 @@
           const translation = yearsTranslations.find(
             (y) => y.year === d.year
           ).translationX;
+          console.log("calc x");
           return d.month !== ""
             ? translation + radius * Math.sin(monthScale(d.month))
             : translation;
@@ -202,45 +200,7 @@
       .alphaDecay(0.1)
       .on("end", handleSimulationEnd);
   }
-
-  // const handleMouseEnter = (e, node) => {
-  //   isTooltipVisible = true;
-  //   tooltipMeta = {
-  //     x: e.offsetX,
-  //     y: e.offsetY,
-  //     screenY: e.clientY,
-  //     url: node.imageLink,
-  //     title: node.title,
-  //     createdIn: node.created_in,
-  //     date: node.month !== "" ? `${node.month} ${node.year}` : node.year,
-  //     medium: node.medium,
-  //     currentLocation: node.current_location,
-  //     width: node.width_cm,
-  //     height: node.height_cm,
-  //     subject: node.subject,
-  //   };
-  // };
-  // const handleMouseLeave = () => {
-  //   isTooltipVisible = false;
-  // };
 </script>
-
-<!-- {#each nodes as node}
-  <circle
-    class:watercolor={node.medium === "watercolor"}
-    class:print={node.medium === "print"}
-    class:lessen={isPeriodSelected && node.period !== selectedPeriod}
-    cx={node.x}
-    cy={node.y}
-    r={node.area_cm2
-      ? Math.sqrt(paintingAreaScale(node.area_cm2) / Math.PI)
-      : paintingDefaultRadius}
-    fill={colorScale(node.subject)}
-    on:mouseover={(e) => handleMouseEnter(e, node)}
-    on:focus={(e) => handleMouseEnter(e, node)}
-    on:mouseleave={() => handleMouseLeave()}
-  />
-{/each} -->
 
 <canvas {width} {height} bind:this={canvasElement} />
 <canvas
@@ -252,21 +212,6 @@
 />
 
 <style lang="scss">
-  // circle {
-  //   cursor: pointer;
-  //   stroke: $white;
-  //   transition: opacity 100ms ease;
-  //   &.watercolor {
-  //     stroke: $text;
-  //   }
-  //   &.print {
-  //     stroke: $secondaryPale;
-  //   }
-  //   &.lessen {
-  //     fill-opacity: 0.1;
-  //     stroke-opacity: 0.1;
-  //   }
-  // }
   canvas {
     position: absolute;
     top: 0;

@@ -97,7 +97,6 @@
     height: 0,
     subject: "",
   };
-  $: console.log(isTooltipVisible, tooltipMeta);
 
   // Add timeline information to the paintings
   import timeline from "../data/timeline.json";
