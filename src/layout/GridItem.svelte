@@ -1,8 +1,7 @@
 <script>
-  import { scalePoint, scaleLinear } from "d3-scale";
+  import { scaleLinear } from "d3-scale";
   import { months } from "../utils/months";
   import { radiansToDegrees } from "../utils/helpers";
-  import Paintings from "../chart_components/Paintings.svelte";
   import Drawings from "../chart_components/Drawings.svelte";
   import Letters from "../chart_components/Letters.svelte";
   import { isMonthIncluded, isYearIncluded } from "../utils/helpers";
@@ -10,8 +9,8 @@
   export let smWidth;
   export let smHeight;
   export let year;
-  export let paintingAreaScale;
-  export let paintingDefaultRadius;
+  // export let paintingAreaScale;
+  // export let paintingDefaultRadius;
   export let paintings;
   export let maxDrawings;
   export let drawings;
@@ -20,13 +19,14 @@
   export let tooltipMeta = {};
   export let isPeriodSelected;
   export let selectedPeriod;
+  export let radialScale;
+  export let radius;
+  export let monthScale;
+  export let padding;
 
-  const padding = 60;
   $: radius = (smWidth - 2 * padding) / 2;
 
-  const monthScale = scalePoint()
-    .domain(months)
-    .range([0, 2 * Math.PI - (2 * Math.PI) / 12]);
+  monthScale.domain(months).range([0, 2 * Math.PI - (2 * Math.PI) / 12]);
 
   $: radialScale = scaleLinear()
     .domain([0, maxDrawings])
@@ -103,17 +103,6 @@
           .number_of_letters}l
       </text>
     {/each}
-    <Paintings
-      {paintingAreaScale}
-      {paintingDefaultRadius}
-      {paintings}
-      {monthScale}
-      {radius}
-      bind:isTooltipVisible
-      bind:tooltipMeta
-      {isPeriodSelected}
-      {selectedPeriod}
-    />
     <Drawings
       {drawings}
       {monthScale}

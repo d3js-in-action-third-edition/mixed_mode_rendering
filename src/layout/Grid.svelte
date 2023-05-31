@@ -7,9 +7,11 @@
   import { months } from "../utils/months";
   import letters from "../data/letters.json";
   import Tooltip from "../UI/Tooltip.svelte";
+  import Paintings from "../chart_components/Paintings.svelte";
 
   export let isPeriodSelected;
   export let selectedPeriod;
+  export let radialScale;
 
   let windowWidth;
   const gridContainer = 1400;
@@ -109,6 +111,27 @@
       }
     });
   });
+
+  import { scalePoint } from "d3-scale";
+  let radius;
+  const wheelPadding = 60;
+  let monthScale = scalePoint();
+
+  let yearsTranslations = [];
+  $: {
+    yearsTranslations = [];
+    years.forEach((year, i) => {
+      const translationX = (i % numColumns) * smWidth + smWidth / 2;
+      const translationY =
+        Math.floor(i / numColumns) * smHeight + wheelPadding + radius;
+
+      yearsTranslations.push({
+        year: year,
+        translationX: translationX,
+        translationY: translationY,
+      });
+    });
+  }
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
@@ -127,8 +150,6 @@
             {smWidth}
             {smHeight}
             {year}
-            {paintingAreaScale}
-            {paintingDefaultRadius}
             paintings={paintings.filter((painting) => painting.year === year)}
             {maxDrawings}
             drawings={yearlyDrawings.find((d) => d.year === year).months}
@@ -137,14 +158,27 @@
             bind:tooltipMeta
             {isPeriodSelected}
             {selectedPeriod}
+            bind:radialScale
+            bind:radius
+            bind:monthScale
+            padding={wheelPadding}
           />
         </g>
       {/each}
     </svg>
+    <Paintings
+      width={svgWidth}
+      height={svgHeight}
+      {paintings}
+      {radius}
+      {monthScale}
+      {paintingDefaultRadius}
+      {paintingAreaScale}
+      {yearsTranslations}
+    />
   {/if}
   {#if isTooltipVisible}
-    <!-- USE SPREAD INSTEAD https://svelte.dev/tutorial/spread-props -->
-    <Tooltip
+    <!-- <Tooltip
       x={tooltipMeta.x}
       y={tooltipMeta.y}
       screenY={tooltipMeta.screenY}
@@ -159,7 +193,7 @@
       subject={tooltipMeta.subject}
       {svgWidth}
       {windowHeight}
-    />
+    /> -->
   {/if}
 </div>
 
@@ -171,4 +205,7 @@
     fill: none;
     stroke: cyan;
   } */
+  .viz-container {
+    position: relative;
+  }
 </style>
