@@ -95,7 +95,9 @@
     currentLocation: "",
     width: 0,
     height: 0,
+    subject: "",
   };
+  $: console.log(isTooltipVisible, tooltipMeta);
 
   // Add timeline information to the paintings
   import timeline from "../data/timeline.json";
@@ -154,8 +156,6 @@
             {maxDrawings}
             drawings={yearlyDrawings.find((d) => d.year === year).months}
             letters={letters.filter((letter) => letter.year === year)}
-            bind:isTooltipVisible
-            bind:tooltipMeta
             {isPeriodSelected}
             {selectedPeriod}
             bind:radialScale
@@ -175,10 +175,12 @@
       {paintingDefaultRadius}
       {paintingAreaScale}
       {yearsTranslations}
+      bind:isTooltipVisible
+      bind:tooltipMeta
     />
   {/if}
   {#if isTooltipVisible}
-    <!-- <Tooltip
+    <Tooltip
       x={tooltipMeta.x}
       y={tooltipMeta.y}
       screenY={tooltipMeta.screenY}
@@ -193,7 +195,7 @@
       subject={tooltipMeta.subject}
       {svgWidth}
       {windowHeight}
-    /> -->
+    />
   {/if}
 </div>
 

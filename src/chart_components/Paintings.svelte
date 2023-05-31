@@ -9,8 +9,8 @@
   // export let paintings;
   export let monthScale;
   export let radius;
-  // export let isTooltipVisible = false;
-  // export let tooltipMeta = {};
+  export let isTooltipVisible = false;
+  export let tooltipMeta = {};
   // export let isPeriodSelected;
   // export let selectedPeriod;
 
@@ -29,13 +29,39 @@
     nodes = simulation.nodes();
   });
 
+  const nodesColors = [];
+  const generateColor = () => {
+    let colorArray = [];
+    for (let i = 0; i < 3; i++) {
+      const randomNumber = Math.floor(Math.random() * 255);
+      colorArray.push(randomNumber);
+    }
+    return colorArray;
+  };
+  const addNodeColor = (node) => {
+    let isNewGeneratedColor = false;
+    while (!isNewGeneratedColor) {
+      const colorArray = generateColor();
+      const colorRGB = `rgb(${colorArray[0]}, ${colorArray[1]}, ${colorArray[2]})`;
+      if (!nodesColors.find((node) => node.colorRGB === colorRGB)) {
+        nodesColors.push({
+          colorRGB: colorRGB,
+          node: node,
+        });
+        isNewGeneratedColor = true;
+        return colorRGB;
+      }
+    }
+  };
+
   let canvasElement;
+  let hiddenCanvasElement;
   const handleSimulationEnd = () => {
     console.log("sim end");
     console.log("nodes", nodes);
 
+    // Draw the paintings circles on the visible canvas
     const context = canvasElement.getContext("2d");
-
     nodes.forEach((node) => {
       const yearTranslations = yearsTranslations.find(
         (y) => y.year === node.year
@@ -66,6 +92,76 @@
       context.fill();
       context.stroke();
     });
+
+    // Draw the circles again on the invisible canvas
+    const hiddenContext = hiddenCanvasElement.getContext("2d", {
+      willReadFrequently: true,
+    });
+    nodes.forEach((node) => {
+      const yearTranslations = yearsTranslations.find(
+        (y) => y.year === node.year
+      );
+      const color = addNodeColor(node);
+      hiddenContext.fillStyle = color;
+      hiddenContext.strokeStyle = color;
+      hiddenContext.beginPath();
+      hiddenContext.arc(
+        node.x,
+        node.y,
+        node.area_cm2
+          ? Math.sqrt(paintingAreaScale(node.area_cm2) / Math.PI)
+          : paintingDefaultRadius,
+        0,
+        2 * Math.PI,
+        true
+      );
+      hiddenContext.fill();
+      hiddenContext.stroke();
+    });
+  };
+
+  let currentColor = "";
+  const handleMouseMove = (event) => {
+    const mouseX = event.layerX;
+    const mouseY = event.layerY;
+
+    const hiddenContext = hiddenCanvasElement.getContext("2d", {
+      willReadFrequently: true,
+    });
+    const imageData = hiddenContext.getImageData(mouseX, mouseY, 1, 1).data;
+    const colorRGB = `rgb(${imageData[0]}, ${imageData[1]}, ${imageData[2]})`;
+    if (colorRGB !== currentColor) {
+      if (colorRGB !== "rgb(0, 0, 0)") {
+        currentColor = colorRGB;
+        const hoveredNode = nodesColors.find(
+          (node) => node.colorRGB === colorRGB
+        );
+        if (hoveredNode) {
+          const nodeInfo = hoveredNode.node;
+          console.log(nodeInfo);
+          isTooltipVisible = true;
+          tooltipMeta = {
+            x: mouseX,
+            y: mouseY,
+            screenY: event.clientY,
+            url: nodeInfo.imageLink,
+            title: nodeInfo.title,
+            createdIn: nodeInfo.created_in,
+            date:
+              nodeInfo.month !== ""
+                ? `${nodeInfo.month} ${nodeInfo.year}`
+                : nodeInfo.year,
+            medium: nodeInfo.medium,
+            currentLocation: nodeInfo.current_location,
+            width: nodeInfo.width_cm,
+            height: nodeInfo.height_cm,
+            subject: nodeInfo.subject,
+          };
+        }
+      } else {
+        isTooltipVisible = false;
+      }
+    }
   };
 
   $: {
@@ -147,6 +243,13 @@
 {/each} -->
 
 <canvas {width} {height} bind:this={canvasElement} />
+<canvas
+  class="hidden-canvas"
+  {width}
+  {height}
+  bind:this={hiddenCanvasElement}
+  on:mousemove={handleMouseMove}
+/>
 
 <style lang="scss">
   // circle {
@@ -168,5 +271,8 @@
     position: absolute;
     top: 0;
     left: 0;
+  }
+  .hidden-canvas {
+    opacity: 0;
   }
 </style>

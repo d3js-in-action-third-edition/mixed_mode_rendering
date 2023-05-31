@@ -15,8 +15,8 @@
   export let maxDrawings;
   export let drawings;
   export let letters;
-  export let isTooltipVisible = false;
-  export let tooltipMeta = {};
+  // export let isTooltipVisible = false;
+  // export let tooltipMeta = {};
   export let isPeriodSelected;
   export let selectedPeriod;
   export let radialScale;
