@@ -2,6 +2,7 @@
   import { forceSimulation, forceX, forceY, forceCollide } from "d3-force";
   import { scaleOrdinal } from "d3-scale";
   import { subjects } from "../utils/subjects";
+  import { onMount } from "svelte";
 
   export let paintingAreaScale;
   export let paintingDefaultRadius;
@@ -9,8 +10,6 @@
   export let radius;
   export let isTooltipVisible = false;
   export let tooltipMeta = {};
-  // export let isPeriodSelected;
-  // export let selectedPeriod;
 
   export let width;
   export let height;
@@ -27,7 +26,20 @@
     nodes = simulation.nodes();
   });
 
-  const nodesColors = [];
+  let canvasElement;
+  let context;
+  let hiddenCanvasElement;
+  let hiddenContext;
+  onMount(() => {
+    context = canvasElement.getContext("2d");
+    context.scale(window.devicePixelRatio, window.devicePixelRatio);
+    hiddenContext = hiddenCanvasElement.getContext("2d", {
+      willReadFrequently: true,
+    });
+    hiddenContext.scale(window.devicePixelRatio, window.devicePixelRatio);
+  });
+
+  const nodesColors = new Map();
   const generateColor = () => {
     let colorArray = [];
     for (let i = 0; i < 3; i++) {
@@ -36,31 +48,24 @@
     }
     return colorArray;
   };
+
   const addNodeColor = (node) => {
     let isNewGeneratedColor = false;
     while (!isNewGeneratedColor) {
       const colorArray = generateColor();
-      const colorRGB = `rgb(${colorArray[0]}, ${colorArray[1]}, ${colorArray[2]})`;
-      if (!nodesColors.find((node) => node.colorRGB === colorRGB)) {
-        nodesColors.push({
-          colorRGB: colorRGB,
-          node: node,
-        });
+      const colorRGB = `rgb(${colorArray.join(",")})`;
+      if (!nodesColors.get(colorRGB)) {
+        nodesColors.set(colorRGB, node);
         isNewGeneratedColor = true;
         return colorRGB;
       }
     }
   };
 
-  let canvasElement;
-  let hiddenCanvasElement;
   const handleSimulationEnd = () => {
     // Draw the paintings circles on the visible canvas
-    const context = canvasElement.getContext("2d");
     nodes.forEach((node) => {
-      const yearTranslations = yearsTranslations.find(
-        (y) => y.year === node.year
-      );
+      // Set the context's fillStyle and strokeStyle properties
       context.fillStyle = colorScale(node.subject);
       switch (node.medium) {
         case "oil":
@@ -73,6 +78,8 @@
           context.strokeStyle = "#BC5D9A";
           break;
       }
+
+      // Draw the circle
       context.beginPath();
       context.arc(
         node.x,
@@ -81,24 +88,16 @@
           ? Math.sqrt(paintingAreaScale(node.area_cm2) / Math.PI)
           : paintingDefaultRadius,
         0,
-        2 * Math.PI,
-        true
+        2 * Math.PI
       );
       context.fill();
       context.stroke();
-    });
 
-    // Draw the circles again on the invisible canvas
-    const hiddenContext = hiddenCanvasElement.getContext("2d", {
-      willReadFrequently: true,
-    });
-    nodes.forEach((node) => {
-      const yearTranslations = yearsTranslations.find(
-        (y) => y.year === node.year
-      );
-      const color = addNodeColor(node);
+      // Draw the circle again on the hidden canvas
+      const color = addNodeColor(node); // Get a new random color
       hiddenContext.fillStyle = color;
       hiddenContext.strokeStyle = color;
+
       hiddenContext.beginPath();
       hiddenContext.arc(
         node.x,
@@ -107,8 +106,7 @@
           ? Math.sqrt(paintingAreaScale(node.area_cm2) / Math.PI)
           : paintingDefaultRadius,
         0,
-        2 * Math.PI,
-        true
+        2 * Math.PI
       );
       hiddenContext.fill();
       hiddenContext.stroke();
@@ -120,19 +118,19 @@
     const mouseX = event.layerX;
     const mouseY = event.layerY;
 
-    const hiddenContext = hiddenCanvasElement.getContext("2d", {
-      willReadFrequently: true,
-    });
-    const imageData = hiddenContext.getImageData(mouseX, mouseY, 1, 1).data;
-    const colorRGB = `rgb(${imageData[0]}, ${imageData[1]}, ${imageData[2]})`;
+    const imageData = hiddenContext.getImageData(
+      mouseX * window.devicePixelRatio,
+      mouseY * window.devicePixelRatio,
+      1,
+      1
+    ).data;
+    console.log("imageData", imageData);
+    const colorRGB = `rgb(${imageData[0]},${imageData[1]},${imageData[2]})`;
     if (colorRGB !== currentColor) {
-      if (colorRGB !== "rgb(0, 0, 0)") {
+      if (colorRGB !== "rgb(0,0,0)") {
         currentColor = colorRGB;
-        const hoveredNode = nodesColors.find(
-          (node) => node.colorRGB === colorRGB
-        );
-        if (hoveredNode) {
-          const nodeInfo = hoveredNode.node;
+        const nodeInfo = nodesColors.get(colorRGB);
+        if (nodeInfo) {
           isTooltipVisible = true;
           tooltipMeta = {
             x: mouseX,
@@ -159,7 +157,6 @@
   };
 
   $: {
-    simulation.restart(); // Necessary to ensure that end event is triggered again
     simulation
       .force(
         "x",
@@ -199,20 +196,25 @@
   }
 </script>
 
-<canvas {width} {height} bind:this={canvasElement} />
+<canvas
+  width={width * window.devicePixelRatio}
+  height={height * window.devicePixelRatio}
+  bind:this={canvasElement}
+/>
 <canvas
   class="hidden-canvas"
-  {width}
-  {height}
+  width={width * window.devicePixelRatio}
+  height={height * window.devicePixelRatio}
   bind:this={hiddenCanvasElement}
   on:mousemove={handleMouseMove}
 />
 
-<style lang="scss">
+<style>
   canvas {
     position: absolute;
     top: 0;
     left: 0;
+    max-width: 100%;
   }
   .hidden-canvas {
     opacity: 0;
